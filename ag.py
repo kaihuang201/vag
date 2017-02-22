@@ -3,12 +3,14 @@
 #     File Name           :     ag.py
 #     Created By          :     CS438 Graders
 #     Creation Date       :     [2017-02-12 21:46]
-#     Last Modified       :     [2017-02-13 01:28]
+#     Last Modified       :     [2017-02-22 00:42]
 #     Description         :      
 #################################################################################
 
 import traceback
+import subprocess
 from subprocess import call, check_output, check_call
+import os
 from os import listdir
 from os.path import isfile, isdir, join
 from pprint import pprint
@@ -18,9 +20,14 @@ from dateutil import parser
 from grade_info import *
 import datetime
 
+DEVNULL = open(os.devnull, 'wb')
 
-SVN_ROOT = '/home/grader/sp17-cs438/'
+#SVN_ROOT = '/home/grader/sp17-cs438/'
+SVN_ROOT = '/home/grader/khuang/'
 MP_PATH = 'MP2/'
+
+MASTER_IP = '192.168.56.101'
+GRADING_SCRIPT = 'runalltests.py'
 
 NETID_EXCLUDE = ['khuang29', 'rhk', 'azhang41']
 
@@ -43,22 +50,18 @@ def svn_last_changed(dirpath):
     return None
 
 
-def grade(nid, masteraddress, command):
+def grade(nid, masteraddress, command='python3 ~/'+GRADING_SCRIPT):
     mppath =  join(SVN_ROOT, nid, MP_PATH)
     try:
-        check_call(["scp -r", mppath, "grader@"+masteraddress+ ":~/cur"])
-        check_call(["ssh", "grader@"+masteraddress, command])
+        check_call(['ssh', 'grader@'+masteraddress, 'rm -rf ~/cur'], stdout=DEVNULL, stderr=subprocess.STDOUT)
+        check_call(['scp', GRADING_SCRIPT, 'grader@'+masteraddress+':~'], stdout=DEVNULL, stderr=subprocess.STDOUT)
+        check_call(['scp', '-r', mppath, 'grader@'+masteraddress+':~/cur'], stdout=DEVNULL, stderr=subprocess.STDOUT)
+        check_call(['ssh', 'grader@'+masteraddress, command], stdout=DEVNULL, stderr=subprocess.STDOUT)
+        call(['scp', 'grader@'+masteraddress+join(':~/cur/', 'results.txt'), mppath], stdout=DEVNULL, stderr=subprocess.STDOUT)
     except:
         traceback.print_exc()
 
-    call(["scp", "grader@"+masteraddress+ join(":~/cur", 'results.txt')], mppath)
 
-    return parse_result(mppath)
-
-
-def parse_result(mppath):
-    with open(join(mppath, 'results.txt') as f:
-        
 
 def get_cur_version_num(nid, mp_path):
     version_file_path = join(SVN_ROOT, nid, mp_path, 'version.txt')
@@ -77,13 +80,13 @@ def auto_grade(nids, mp_path):
         current_version = get_cur_version_num(nid, mp_path)
         if current_version <= gi.get_last_version_num(nid):
             print('    current_version = %d, last_version = %d. Skipping' % (current_version, gi.get_last_version_num(nid)))
-            continue
+            #continue #TODO: UNCOMMENT!
 
-        curgrade = grade(nid)
+        curgrade = grade(nid, MASTER_IP)
 
         gi.update(nid, current_version, curgrade)
         gi.dump()
 
 
 if __name__=='__main__':
-    auto_grade(list_students(NETID_EXCLUDE), 'MP1')
+    auto_grade(list_students(NETID_EXCLUDE), MP_PATH)
