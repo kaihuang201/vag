@@ -3,7 +3,7 @@
 #     File Name           :     ag.py
 #     Created By          :     CS438 Graders
 #     Creation Date       :     [2017-02-12 21:46]
-#     Last Modified       :     [2017-02-22 00:42]
+#     Last Modified       :     [2017-02-25 20:52]
 #     Description         :      
 #################################################################################
 
@@ -42,12 +42,20 @@ def list_students(exclude=[]):
 
 def svn_last_changed(dirpath):
     svninfo = check_output(['svn', 'info', dirpath])
-    for l in svninfo.split('\n'):
-        if 'Last Changed Date' in l:
-            segs = l.split()
-            timestr = ' '.join(segs[3:6])
-            return parser.parse(timestr)
-    return None
+    timestamp = None
+    rev = None
+    try:
+        for l in svninfo.split('\n'):
+            if 'Last Changed Date' in l:
+                segs = l.split()
+                timestr = ' '.join(segs[3:6])
+                timestamp = parser.parse(timestr)
+            elif 'Last Changed Rev' in l:
+                segs = l.split()
+                rev = int(segs[3])
+    except:
+        pass
+    return timestamp, rev
 
 
 def grade(nid, masteraddress, command='python3 ~/'+GRADING_SCRIPT):
@@ -90,3 +98,4 @@ def auto_grade(nids, mp_path):
 
 if __name__=='__main__':
     auto_grade(list_students(NETID_EXCLUDE), MP_PATH)
+    #print svn_last_changed('/home/grader/sp17-cs438/khuang29')
