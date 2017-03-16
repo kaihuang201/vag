@@ -34,7 +34,7 @@ class GradeInfo:
     def get_last_version_num(self, nid):
         if nid in self.gi:
             return self.gi[nid]['version']
-        return -1
+        return 0
     
     def update(self, nid, version, grade):
         if nid not in self.gi:

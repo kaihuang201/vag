@@ -3,7 +3,7 @@
 #     File Name           :     runalltests.py
 #     Created By          :     CS438 Graders
 #     Creation Date       :     [2017-02-19 12:34]
-#     Last Modified       :     [2017-02-22 00:30]
+#     Last Modified       :     [2017-02-28 12:53]
 #     Description         :     run all tests for MP 
 #################################################################################
 
@@ -45,16 +45,17 @@ def runtests(test_dir, testcases):
     f = open(cur_dir+'results.txt', 'w+')
     total_score = 20
     for testname, weight, timeout in testcases:
+        print (testname, weight, timeout)
         try:
             message = subprocess.check_output(
                 ["perl", testname], timeout=timeout).decode()
             segs = message.strip().split()
             item_score = int(segs[0])
-            if item_score >= 0:
+            if item_score > 0:
+                segs[0] = '0'
+            else:
                 total_score += weight 
                 segs[0] = str(weight)
-            else:
-                segs[0] = '0'
             f.write(' '.join(segs) + '\n')
         except:
             message = "0 " + testname + " timed out.\n"
